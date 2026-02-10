@@ -5,7 +5,9 @@ const validator=require("validator")
 const userSchema=new mongoose.Schema({
     firstname:{
         type:String,
-        required:true
+        required:[true,"firstname is required"],
+        minlength:[3,"firstname should be minlength 3"],
+        maxlength:[50,"firstname not more than 50 character"]
     },
     lastname:{
         type:String

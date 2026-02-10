@@ -1,6 +1,9 @@
 const express = require("express");
 const connectDb = require("./src/config/database");
 const UserModel = require("./src/models/user");
+const bcrypt=require('bcrypt')
+
+const validateUserData=require('./src/helper/user')
 
 const app = express();
 
@@ -22,10 +25,28 @@ const startServer = async () => {
 startServer();
 
 app.post("/signup", async (req, res) => {
+  
+    validateUserData(req)
+   
+    const {firstname,lastname,email,skills,age,gender,about,password}=req.body
 
+  const passwordhash=await bcrypt.hash(password,10)
+   
+
+   const newUser={
+    firstname:firstname,
+    lastname:lastname,
+    email:email,
+    skills:skills,
+    password:passwordhash,
+    age:age,
+    gender:gender,
+    about:about
+
+   }
 
   //this (new keyword) will create a new instance inside a model
-  const user = new UserModel(req.body);
+  const user = new UserModel(newUser);
 
   try {
     const userexist=await UserModel.findOne({email:user.email})
@@ -41,9 +62,36 @@ app.post("/signup", async (req, res) => {
     console.log(err.message);
     res
       .status(400)
-      .send("there is some error when saving a data into a database");
+      .send("Internal server ERROR",err.message);
   }
 });
+
+
+app.post('/login',async(req,res)=>{
+
+  const {email,password}=req.body;
+
+  if(!email || !password){
+    res.status(400).send("Email and password are required")
+  }
+
+  const user= await UserModel.findOne({email:email})
+   
+  if(!user){
+    res.status(401).send("email and password are unauthorized")
+  }
+
+  const validpassword=await bcrypt.compare(password,user.password)
+
+  if(!validpassword){
+    res.status(401).send("unauthorized")
+  }
+
+  else {
+    res.status(200).send("user logged in successfully")
+  }
+
+})
 
 app.get("/user", async (req, res) => {
   const eamil = req.body.email;
