@@ -28,8 +28,15 @@ app.post("/signup", async (req, res) => {
   const user = new UserModel(req.body);
 
   try {
-    await user.save();
-    res.send("user saved successfully in database");
+    const userexist=await UserModel.findOne({email:user.email})
+    if(userexist){
+        res.status(409).send("user already exist")
+    }
+    else{
+
+        await user.save();
+        res.send("user saved successfully in database");
+    }
   } catch (err) {
     console.log(err.message);
     res
@@ -39,10 +46,10 @@ app.post("/signup", async (req, res) => {
 });
 
 app.get("/user", async (req, res) => {
-  const lastname = req.body.lastname;
+  const eamil = req.body.email;
 
   try {
-    const users = await UserModel.find({ lastname: lastname });
+    const users = await UserModel.findOne({ email:email });
 
     if (!users) {
       res.status(404).send("No user exist with this email id");
@@ -73,20 +80,35 @@ app.delete('/user',async(req,res)=>{
 
 
 
-app.patch('/user',async(req,res)=>{
+app.patch('/user/:userId',async(req,res)=>{
 
-    const userId=req.body.id;
+    const userId=req.params?.userId;
 
 
 
     try{
-        const updatedUser=await UserModel.findByIdAndUpdate({ _id:userId},req.body,{returnDocument:"after"})
-         console.log(updatedUser)
-        if(!updatedUser){
-            res.status(404).send("user is not found")
-        }
-        res.send("user details updated")
+          const update_allowed=["firstname","lastname","age","skills","about"]
+           
+          const isUpdateAllowed=Object.keys(req.body).every((k)=>{
+           return update_allowed.includes(k)
+          })
+
+          if(!isUpdateAllowed){
+           res.status(400).send("some fields are not updated")
+          }
+
+          else{
+
+              const updatedUser=await UserModel.findByIdAndUpdate({ _id:userId},req.body,{new:true,runValidators:true})
+               console.log(updatedUser)
+              if(!updatedUser){
+                  res.status(404).send("user is not found")
+              }
+              res.send("user details updated")
+          }
+
     }catch(err){
+        console.log(err.message)
         res.status(400).send("something went wrong")
     }
 })
