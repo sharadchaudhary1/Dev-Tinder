@@ -2,12 +2,17 @@ const express = require("express");
 const connectDb = require("./src/config/database");
 const UserModel = require("./src/models/user");
 const bcrypt=require('bcrypt')
+const cookieParser=require("cookie-parser")
+const jwt=require("jsonwebtoken")
+const userAuth=require("./src/middleware/auth")
 
 const validateUserData=require('./src/helper/user')
 
 const app = express();
 
+
 app.use(express.json());
+app.use(cookieParser())
 
 const startServer = async () => {
   try {
@@ -88,13 +93,29 @@ app.post('/login',async(req,res)=>{
   }
 
   else {
+      
+    const token=jwt.sign({_id:user._id},"jaat",{expiresIn:'1h'})
+  
+    res.cookie('token',token)
     res.status(200).send("user logged in successfully")
   }
 
 })
 
+
+app.get('/profile',userAuth,async(req,res)=>{
+
+  try{
+
+       res.send(req.user)
+    
+  }catch(err){
+    res.status(401).send(err.message)
+  }
+})
+
 app.get("/user", async (req, res) => {
-  const eamil = req.body.email;
+  const email = req.body.email;
 
   try {
     const users = await UserModel.findOne({ email:email });
@@ -105,7 +126,7 @@ app.get("/user", async (req, res) => {
       res.send(users);
     }
   } catch (err) {
-    res.status(401).send("semething went wrong");
+    res.status(401).send("something went wrong");
   }
 });
 
