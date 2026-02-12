@@ -10,7 +10,7 @@ const userAuth=async(req,res,next)=>{
 
     const {token}= cookies;
      if(!token){
-        throw new Error("Invalid token go to login page ")
+        throw new Error("first go  to login page ")
      }
     
 
@@ -19,7 +19,7 @@ const userAuth=async(req,res,next)=>{
    const user=await UserModel.findOne({_id:decodedtoken._id})
 
    if(!user){
-    throw new Error("session is  expired")
+    throw new Error("No user exist with given information first registered a user")
    }
 
    else {
@@ -31,3 +31,7 @@ const userAuth=async(req,res,next)=>{
 
 
 module.exports=userAuth;
+
+
+
+
