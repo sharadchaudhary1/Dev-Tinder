@@ -1,13 +1,13 @@
 
 const express=require("express")
-const UserAuth=require("../middleware/auth")
+const userAuth=require("../middleware/auth")
 const ConnectionRequestModel = require("../models/connectionRequest")
 const UserModel=require("../models/user")
 
 
 const router=express.Router()
 
-router.post('/save/:status/:toUserId',UserAuth,async(req,res)=>{
+router.post('/sent/:status/:toUserId',userAuth,async(req,res)=>{
 
     try{
 
@@ -59,5 +59,45 @@ router.post('/save/:status/:toUserId',UserAuth,async(req,res)=>{
 
 })
 
+
+router.post('/review/:status/:requestId',userAuth,async(req,res)=>{
+
+    const loggedIn=req.user._id;
+    const {status,requestId}=req.params;
+
+    try{
+
+        const allowedStatus=["accepted","rejected"];
+    
+        if(!allowedStatus.includes(status)){
+          throw new Error("Invalid status")
+        
+        }
+         
+        const connectionRequest=await ConnectionRequestModel.findOne({
+            _id:requestId,
+            toUserId:loggedIn,
+            status:"interested"
+        })
+
+        if(!connectionRequest){
+           throw new Error("connection request not found")
+        }
+
+        const requestedUser=await UserModel.findById(connectionRequest.fromUserId)
+
+        connectionRequest.status=status;
+
+        const data=await connectionRequest.save();
+
+        res.send(`connection Request of ${requestedUser.firstname} is ${status}`)
+
+    }
+    catch(err){
+        res.status(400).send("ERROR:"+ err.message)
+    }
+
+
+})
 
 module.exports=router
