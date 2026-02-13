@@ -7,6 +7,7 @@ const cookieParser=require("cookie-parser")
 
 const authRouter=require("./src/routes/auth")
 const profileRouter=require("./src/routes/profile")
+const requestRouter=require("./src/routes/request")
 
 const app = express();
 
@@ -32,7 +33,7 @@ startServer();
 app.use('/auth',authRouter)
 app.use('/profile',profileRouter)
 
-
+app.use('/request',requestRouter)
 
 
 

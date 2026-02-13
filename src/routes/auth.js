@@ -72,7 +72,7 @@ router.post('/login',async(req,res)=>{
 
   else {
       
-    const token=jwt.sign({_id:user._id},"jaat",{expiresIn:'1h'})
+    const token=jwt.sign({_id:user._id},"jaat")
   
     res.cookie('token',token,{
         expires:new Date(Date.now() + 24*3600000)
