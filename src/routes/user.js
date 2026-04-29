@@ -2,6 +2,7 @@
 const express=require("express")
 const userAuth=require("../middleware/auth")
 const ConnectionRequestModel=require("../models/connectionRequest")
+const UserModel=require("../models/user")
 
 
 const router=express.Router()
@@ -49,9 +50,9 @@ router.get('/connections',userAuth,async(req,res)=>{
             return user.fromUserId
         })
 
-        console.log(data)
+     
 
-        res.send("show all connection of user")
+        res.send(data)
     }
     catch(err){
         console.log(err.message)
@@ -60,5 +61,62 @@ router.get('/connections',userAuth,async(req,res)=>{
 
 })
 
+
+router.get('/feed',userAuth,async(req,res)=>{
+
+    loggedInUser=req.user
+
+    const connectionUsers=await ConnectionRequestModel.find({
+        $or:[
+            {fromUserId:loggedInUser._id},
+            {toUserId:loggedInUser._id}
+        ]
+    }).select(["fromUserId", "toUserId"])
+
+      
+    const hideUsersFromFeed=new Set()
+
+    connectionUsers.forEach(user=> {
+        hideUsersFromFeed.add(user.fromUserId.toString());
+        hideUsersFromFeed.add(user.toUserId.toString())
+    })
+
+
+
+    const users=await UserModel.find({
+        $and:[
+            
+            { _id:{$nin:Array.from(hideUsersFromFeed)}},
+            {_id :{$ne:loggedInUser._id}}
+        ]
+    }).select(["firstname","lastname","age","gender","skills","about","profilePicture","images"])
+
+    
+res.send(users)
+
+
+})
+
+
+
+router.get('/chat/:id',userAuth,async(req,res)=>{
+    
+    try{
+
+        const {id}=req.params
+     
+         if(!id) return res.status(400).send("please provide a id of user")
+     
+         const user =await UserModel.findById(id).select(["firstname","lastname","skills","age","gender","about","profilePicture"])
+     
+         if(!user) return res.status(404).send("user not found with this id")
+     
+             return res.status(200).send(user)
+    }
+    catch(err){
+        console.log(err.message)
+    }
+
+})
 
 module.exports=router;

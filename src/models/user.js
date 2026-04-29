@@ -50,6 +50,28 @@ const userSchema=new mongoose.Schema({
         type:String,
         default:"i am a software engineer"
     },
+
+    images: {
+        type: [String],
+        default: [],
+        validate: {
+            validator: function(value) {
+                return Array.isArray(value) && value.every(img => validator.isURL(img))
+            },
+            message: "All images must be valid URLs"
+        }
+    },
+    profilePicture: {
+        type: String,
+        default: null,
+        validate: {
+            validator: function(value) {
+                if (value === null) return true
+                return validator.isURL(value)
+            },
+            message: "Profile picture must be a valid URL"
+        }
+    }
     
 },{
     timestamps:true

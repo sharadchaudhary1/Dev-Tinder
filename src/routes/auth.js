@@ -1,17 +1,19 @@
 
 const express=require("express")
 const bcrypt=require("bcrypt")
-const validateUserData=require("../helper/user")
+const validateUserData=require("../helper/validate")
 const jwt=require("jsonwebtoken")
 const UserModel=require("../models/user")
 
+
+
 const router=express.Router()
 
-router.post("/signup", async (req, res) => {
+router.post("/register", async (req, res) => {
   
     validateUserData(req)
    
-    const {firstname,lastname,email,skills,age,gender,about,password}=req.body
+    const {firstname,lastname,email,skills,age,gender,about,password,profilePicture,images}=req.body
 
   const passwordhash=await bcrypt.hash(password,10)
    
@@ -24,8 +26,9 @@ router.post("/signup", async (req, res) => {
     password:passwordhash,
     age:age,
     gender:gender,
-    about:about
-
+    about:about,
+    profilePicture,
+    images
    }
 
   //this (new keyword) will create a new instance inside a model
@@ -67,7 +70,7 @@ router.post('/login',async(req,res)=>{
   const validpassword=await bcrypt.compare(password,user.password)
 
   if(!validpassword){
-    res.status(401).send("unauthorized")
+    res.status(401).send("invalid Credentials")
   }
 
   else {
@@ -77,7 +80,7 @@ router.post('/login',async(req,res)=>{
     res.cookie('token',token,{
         expires:new Date(Date.now() + 24*3600000)
     })
-    res.status(200).send("user logged in successfully")
+    res.status(200).send(user)
   }
 
 })

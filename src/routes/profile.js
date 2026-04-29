@@ -25,17 +25,17 @@ router.patch('/update',userAuth,async(req,res)=>{
 
     try{
          if(!_id){
-            throw new Error("First login your profile")
+           return res.status(404).send("First login yourself")
          }
 
-          const update_allowed=["firstname","lastname","age","skills","about"]
+          const update_allowed=["firstname","lastname","age","skills","about","gender","profilePicture","images"]
            
           const isUpdateAllowed=Object.keys(req.body).every((k)=>{
            return update_allowed.includes(k)
           })
 
           if(!isUpdateAllowed){
-           res.status(400).send("Invalid update request")
+          return res.status(400).send("Invalid update request")
           }
 
           else{
@@ -43,14 +43,14 @@ router.patch('/update',userAuth,async(req,res)=>{
               const updatedUser=await UserModel.findByIdAndUpdate({ _id:_id},req.body,{new:true,runValidators:true})
                console.log(updatedUser)
               if(!updatedUser){
-                  res.status(404).send("user is not found")
+                return  res.status(404).send("user is not found")
               }
-              res.send("user details updated")
+           return   res.send(updatedUser)
           }
 
     }catch(err){
         console.log(err.message)
-        res.status(400).send("something went wrong")
+      return  res.status(400).send("something went wrong")
     }
 })
 
@@ -131,10 +131,15 @@ router.patch('/passwordupdate',userAuth,async(req,res)=>{
             res.send("password is updated")
         }
     }catch(err){
+        console.log(err.message)
         res.status(500).send(err.message)
     }
 
 })
+
+
+
+
 
 
 

@@ -12,8 +12,10 @@ router.post('/sent/:status/:toUserId',userAuth,async(req,res)=>{
     try{
 
         const fromUserId=req.user._id;
-        const toUserId=req.params.toUserId;
+        const toUserId=req.params.toUserId.trim();
         const status=req.params.status
+
+        // console.log(toUserId)
 
         if(fromUserId==toUserId){
             throw new Error("user can't send a connection request to itself")
@@ -34,7 +36,7 @@ router.post('/sent/:status/:toUserId',userAuth,async(req,res)=>{
         const userExist=await UserModel.findById(toUserId)
 
         if(!userExist){
-            throw new Error("ERROR: you are trying to make a connection with Invalid user Id")
+            throw new Error("ERROR: you are trying to make a connection with Invalid user ")
         }
  
         const existingConnection=await ConnectionRequestModel.findOne({
@@ -81,7 +83,7 @@ router.post('/review/:status/:requestId',userAuth,async(req,res)=>{
         })
 
         if(!connectionRequest){
-           throw new Error("connection request not found")
+           throw new Error(" No connection request  found")
         }
 
         const requestedUser=await UserModel.findById(connectionRequest.fromUserId)
