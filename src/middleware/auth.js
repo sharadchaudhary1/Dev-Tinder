@@ -16,7 +16,7 @@ const userAuth=async(req,res,next)=>{
          }
         
     
-       const decodedtoken=jwt.verify(token,"jaat");
+       const decodedtoken=jwt.verify(token,process.env.JWT_SECRET);
     
        const user=await UserModel.findOne({_id:decodedtoken._id})
     

@@ -4,6 +4,7 @@ const UserModel = require("./src/models/user");
 const http=require("http")
 
 const cookieParser=require("cookie-parser")
+require("dotenv").config();
 
 
 const authRouter=require("./src/routes/auth")
