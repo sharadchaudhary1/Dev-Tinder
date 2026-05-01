@@ -20,7 +20,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://truebond-six.vercel.app/"
+    "https://truebond-six.vercel.app"
   ],
   credentials: true
 }));
