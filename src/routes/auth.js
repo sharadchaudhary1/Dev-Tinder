@@ -46,7 +46,8 @@ router.post("/register", async (req, res) => {
         res.send("user saved successfully in database");
     }
   } catch (err) {
-   
+       
+    console.log(err.message)
     res
       .status(400)
       .send("Internal server ERROR",err.message);
