@@ -1,42 +1,34 @@
-const jwt=require("jsonwebtoken")
-const UserModel=require("../models/user")
+const jwt = require("jsonwebtoken");
+const UserModel = require("../models/user");
 
-const userAuth=async(req,res,next)=>{
-    
-    try{
+const userAuth = async (req, res, next) => {
+  try {
+    const token = req.cookies?.token;
 
-        const cookies=req.cookies; 
-        if(!cookies){
-            throw new Error("First authenticate yourself")
-        }
-    
-        const {token}= cookies;
-         if(!token){
-            throw new Error("No existing token first  login with credentials ")
-         }
-        
-    
-       const decodedtoken=jwt.verify(token,process.env.JWT_SECRET);
-    
-       const user=await UserModel.findOne({_id:decodedtoken._id})
-    
-       if(!user){
-        throw new Error("No user exist with given information first registered a user")
-       }
-    
-       else {
-    
-        req.user=user;
-        next()
-       }
-    }catch(err){
-        res.status(400).send(err.message)
+
+    if (!token) {
+      return res.status(401).send("Please login first");
     }
-}
 
 
-module.exports=userAuth;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await UserModel.findById(decoded._id);
+
+   
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
 
 
+    req.user = user;
+    next();
 
+  } catch (err) {
+    console.error("Auth error:", err.message);
 
+    return res.status(401).send("Invalid or expired token");
+  }
+};
+
+module.exports = userAuth;

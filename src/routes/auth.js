@@ -55,46 +55,49 @@ router.post("/register", async (req, res) => {
 });
 
 
-router.post('/login',async(req,res)=>{
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
 
-  const {email,password}=req.body;
-
-  if(!email || !password){
-    res.status(400).send("Email and password are required")
+  if (!email || !password) {
+    return res.status(400).send("Email and password are required");
   }
 
-  const user= await UserModel.findOne({email:email})
-   
-  if(!user){
-    res.status(401).send("email and password are unauthorized")
+  const user = await UserModel.findOne({ email });
+
+  if (!user) {
+    return res.status(401).send("Invalid credentials");
   }
 
-  const validpassword=await bcrypt.compare(password,user.password)
+  const validpassword = await bcrypt.compare(password, user.password);
 
-  if(!validpassword){
-    res.status(401).send("invalid Credentials")
+  if (!validpassword) {
+    return res.status(401).send("Invalid credentials");
   }
 
-  else {
-      
-    const token=jwt.sign({_id:user._id},process.env.JWT_SECRET)
-  
-    res.cookie('token',token,{
-        expires:new Date(Date.now() + 24*3600000)
-    })
-    res.status(200).send(user)
-  }
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
 
-})
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
+    expires: new Date(Date.now() + 24 * 3600000)
+  });
+
+  res.status(200).send(user);
+});
 
 
+router.post("/logout", async (req, res) => {
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "None" : "Lax",
+    expires: new Date(0)
+  });
 
-router.post("/logout",async(req,res)=>{
-
-    res.cookie("token",null,{
-        expires:new Date(Date.now())
-    })
-    res.send("logged out successfully")
-})
+  res.send("logged out successfully");
+});
 
 module.exports=router;
