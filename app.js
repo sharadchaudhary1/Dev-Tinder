@@ -34,13 +34,14 @@ const server = http.createServer(app)
 initializeSocket(server)
 
 
+const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {
     await connectDb();
     console.log("database connected successfully");
-    server.listen(3000, () => {
-      console.log("server is running on port 3000");
+    server.listen(PORT, () => {
+      console.log(`server is running on port ${PORT}`);
     });
   } catch (err) {
     console.log("database not connected", err);
