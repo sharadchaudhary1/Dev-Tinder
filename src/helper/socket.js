@@ -13,9 +13,14 @@ const initializeSocket=(server)=>{
   
     
     const io= socket(server,{
-      cors :{
-        origin:"http://localhost:5173",
-      }
+    cors: {
+      origin: [
+        "http://localhost:5173",
+        "https://truebond-six.vercel.app"
+      ],
+    
+      credentials: true
+    }
     })
     
     io.on("connection",(socket)=>{
