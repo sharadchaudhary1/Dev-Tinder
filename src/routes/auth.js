@@ -90,6 +90,9 @@ router.post("/login", async (req, res) => {
 
 
 router.post("/logout", async (req, res) => {
+  
+   const isProduction = process.env.NODE_ENV === "production";
+
   res.cookie("token", "", {
     httpOnly: true,
     secure: isProduction,

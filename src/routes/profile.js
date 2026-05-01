@@ -17,42 +17,66 @@ router.get('/get',userAuth,async(req,res)=>{
 })
 
 
-router.patch('/update',userAuth,async(req,res)=>{
+router.patch("/update", userAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
 
-    const {_id}=req.user;
-
-
-
-    try{
-         if(!_id){
-           return res.status(404).send("First login yourself")
-         }
-
-          const update_allowed=["firstname","lastname","age","skills","about","gender","profilePicture","images"]
-           
-          const isUpdateAllowed=Object.keys(req.body).every((k)=>{
-           return update_allowed.includes(k)
-          })
-
-          if(!isUpdateAllowed){
-          return res.status(400).send("Invalid update request")
-          }
-
-          else{
-
-              const updatedUser=await UserModel.findByIdAndUpdate({ _id:_id},req.body,{new:true,runValidators:true})
-               console.log(updatedUser)
-              if(!updatedUser){
-                return  res.status(404).send("user is not found")
-              }
-           return   res.send(updatedUser)
-          }
-
-    }catch(err){
-        console.log(err.message)
-      return  res.status(400).send("something went wrong")
+   
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No data provided for update"
+      });
     }
-})
+
+  
+    const allowedUpdates = ["firstname", "lastname", "age", "skills",  "about", "gender","profilePicture","images" ];
+
+   
+    const isValidUpdate = Object.keys(req.body).every((field) =>
+      allowedUpdates.includes(field)
+    );
+
+    if (!isValidUpdate) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid update fields"
+      });
+    }
+
+    
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      req.body,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+   
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedUser
+    });
+
+  } catch (err) {
+    console.error("Update error:", err.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating profile"
+    });
+  }
+});
 
 
 
