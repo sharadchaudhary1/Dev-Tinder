@@ -81,7 +81,8 @@ router.get('/feed',userAuth,async(req,res)=>{
         hideUsersFromFeed.add(user.toUserId.toString())
     })
 
-
+    // const page=1;
+    // const limit=2;
 
     const users=await UserModel.find({
         $and:[
@@ -90,6 +91,7 @@ router.get('/feed',userAuth,async(req,res)=>{
             {_id :{$ne:loggedInUser._id}}
         ]
     }).select(["firstname","lastname","age","gender","skills","about","profilePicture","images"])
+    // .skip((page-1)*limit).limit(limit)
 
     
 res.send(users)
