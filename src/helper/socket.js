@@ -57,7 +57,8 @@ const initializeSocket = (server) => {
             clearedAt: []
           });
         }
-
+        
+         
         if (!chat.clearedAt) {
           chat.clearedAt = [];
         }
@@ -70,7 +71,8 @@ const initializeSocket = (server) => {
         };
 
         chat.messages.push(newMessage);
-        await chat.save();
+         await chat.save();
+       
 
         console.log("Message saved successfully");
 
@@ -102,3 +104,6 @@ const initializeSocket = (server) => {
 };
 
 module.exports = initializeSocket;
+
+
+

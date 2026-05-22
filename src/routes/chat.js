@@ -96,6 +96,10 @@ router.get("/:targetUserId", userAuth, async (req, res) => {
   }
 });
 
+
+
+
+
 // Delete a single message 
 router.delete("/:chatId/message/:messageId", userAuth, async (req, res) => {
   try {
@@ -151,7 +155,6 @@ router.delete("/:chatId/message/:messageId", userAuth, async (req, res) => {
 
     await chat.save();
 
-    // console.log("Message deleted successfully for user:", userId.toString());
 
     res.status(200).json({
       message: "Message deleted successfully",
@@ -168,62 +171,71 @@ router.delete("/:chatId/message/:messageId", userAuth, async (req, res) => {
 });
 
 // Clear entire chat for current user ,hides old messages, shows new ones
-router.delete("/:chatId", userAuth, async (req, res) => {
-  try {
-    const { chatId } = req.params;
-    const userId = req.user._id;
 
-    console.log("Clear chat request:", { chatId, userId: userId.toString() });
 
-    if (!mongoose.Types.ObjectId.isValid(chatId)) {
-      return res.status(400).json({ message: "Invalid chat ID" });
-    }
+// router.delete("/:chatId", userAuth, async (req, res) => {
+//   try {
+//     const { chatId } = req.params;
+//     const userId = req.user._id;
 
-    const chat = await chatModel.findById(chatId);
+//     console.log("Clear chat request:", { chatId, userId: userId.toString() });
 
-    if (!chat) {
-      return res.status(404).json({ message: "Chat not found" });
-    }
+//     if (!mongoose.Types.ObjectId.isValid(chatId)) {
+//       return res.status(400).json({ message: "Invalid chat ID" });
+//     }
 
-    const isParticipant = chat.particpants.some(
-      (p) => p.toString() === userId.toString()
-    );
+//     const chat = await chatModel.findById(chatId);
 
-    if (!isParticipant) {
-      return res.status(403).json({ message: "You are not a participant in this chat" });
-    }
+//     if (!chat) {
+//       return res.status(404).json({ message: "Chat not found" });
+//     }
 
-    if (!chat.clearedAt) {
-      chat.clearedAt = [];
-    }
+//     const isParticipant = chat.particpants.some(
+//       (p) => p.toString() === userId.toString()
+//     );
 
-    // Check if user has already cleared this chat
-    const alreadyCleared = chat.clearedAt.some(
-      (record) => record.userId.toString() === userId.toString()
-    );
+//     if (!isParticipant) {
+//       return res.status(403).json({ message: "You are not a participant in this chat" });
+//     }
 
-    if (!alreadyCleared) {
-      chat.clearedAt.push({
-        userId: userId,
-        clearedTimestamp: new Date()
-      });
-    }
+//     if (!chat.clearedAt) {
+//       chat.clearedAt = [];
+//     }
 
-    await chat.save();
+//     // Check if user has already cleared this chat
+//     const alreadyCleared = chat.clearedAt.some(
+//       (record) => record.userId.toString() === userId.toString()
+//     );
 
-    console.log("Chat cleared for user:", userId.toString());
+//     if (!alreadyCleared) {
+//       chat.clearedAt.push({
+//         userId: userId,
+//         clearedTimestamp: new Date()
+//       });
+//     }
 
-    res.status(200).json({
-      message: "Chat cleared successfully",
-      success: true
-    });
-  } catch (err) {
-    console.error("Error clearing chat:", err);
-    return res.status(500).json({
-      message: "Server error",
-      error: err.message
-    });
-  }
-});
+//     await chat.save();
+
+//     console.log("Chat cleared for user:", userId.toString());
+
+//     res.status(200).json({
+//       message: "Chat cleared successfully",
+//       success: true
+//     });
+//   } catch (err) {
+//     console.error("Error clearing chat:", err);
+//     return res.status(500).json({
+//       message: "Server error",
+//       error: err.message
+//     });
+//   }
+// });
+
+
+
 
 module.exports = router;
+
+
+
+

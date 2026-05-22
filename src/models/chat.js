@@ -43,3 +43,10 @@ const chatSchema = new mongoose.Schema({
 const chat = mongoose.model("chat", chatSchema);
 
 module.exports = chat;
+
+
+
+
+
+
+
