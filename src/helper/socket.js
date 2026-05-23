@@ -1,9 +1,7 @@
 
-
-
 const socket = require("socket.io");
 const crypto = require("crypto");
-const ChatModel = require("../models/chat");
+const UserStatus = require("../models/userStatus");
 
 const CreateSecretRoomId = (userId, targetUserId) => {
   return crypto
@@ -13,8 +11,6 @@ const CreateSecretRoomId = (userId, targetUserId) => {
 };
 
 const initializeSocket = (server) => {
-  const userSocketMap = new Map();
-
   const io = socket(server, {
     cors: {
       origin: [
@@ -26,84 +22,168 @@ const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("User connected:", socket.id);
+    console.log("New client connected:", socket.id);
 
-    socket.on("register-user", (userId) => {
-      userSocketMap.set(userId, socket.id);
-      console.log("User registered:", userId);
-    });
-
-    socket.on("joinChat", ({ userId, targetUserId }) => {
-      const roomId = CreateSecretRoomId(userId, targetUserId);
-      socket.join(roomId);
-      console.log(`User ${userId} joined room ${roomId}`);
-    });
-
-    socket.on("sendMessage", async ({ userId, targetUserId, senderId, text }) => {
-      const roomId = CreateSecretRoomId(userId, targetUserId);
-
+   
+    // Register user 
+    socket.on("register-user", async (userId) => {
       try {
-        console.log("Sending message from:", userId, "to:", targetUserId);
+        // Update user status 
+        await UserStatus.findOneAndUpdate(
+          { user: userId },
+          {
+            isOnline: true,
+            socketId: socket.id,
+            lastSeen: new Date(),
+          },
+          { upsert: true, new: true }
+        );
 
-        let chat = await ChatModel.findOne({
-          particpants: { $all: [userId, targetUserId] }
+        // Join user personal room
+        socket.join(`user:${userId}`);
+
+        // Broadcast status to all connected users
+        io.emit("user:status:changed", {
+          userId,
+          isOnline: true,
+          lastSeen: new Date(),
         });
 
-        if (!chat) {
-          console.log("Chat not found, creating new one");
-          chat = new ChatModel({
-            particpants: [userId, targetUserId],
-            messages: [],
-            clearedAt: []
-          });
-        }
-        
-         
-        if (!chat.clearedAt) {
-          chat.clearedAt = [];
-        }
-
-        // Create new message with empty deletedBy array
-        const newMessage = {
-          senderId: userId,
-          text: text,
-          deletedBy: []
-        };
-
-        chat.messages.push(newMessage);
-         await chat.save();
-       
-
-        console.log("Message saved successfully");
-
-        // Get  saved message ID
-        const savedMessage = chat.messages[chat.messages.length - 1];
-
-        // Emit to all users in the room
-        io.to(roomId).emit("messageReceived", {
-          userId: targetUserId,
-          senderId: userId,
-          text: text,
-          messageId: savedMessage._id,
-          timestamp: savedMessage.createdAt,
-          deletedBy: []
-        });
-
-        console.log("Message emitted to room:", roomId);
-
-      } catch (err) {
-        console.error("Error saving message:", err);
-        socket.emit("error", { message: "Failed to save message" });
+        // console.log(` User ${userId} registered with socket ${socket.id}`);
+      } catch (error) {
+        console.error("Error registering user:", error);
       }
     });
 
-    socket.on("disconnect", () => {
-      console.log("User disconnected:", socket.id);
+    // User goes offline
+    socket.on("user:offline", async (userId) => {
+      try {
+        await UserStatus.findOneAndUpdate(
+          { user: userId },
+          {
+            isOnline: false,
+            lastSeen: new Date(),
+          }
+        );
+
+        io.emit("user:status:changed", {
+          userId,
+          isOnline: false,
+          lastSeen: new Date(),
+        });
+
+        socket.leave(`user:${userId}`);
+        // console.log(` User ${userId} is offline`);
+      } catch (error) {
+        console.error("Error updating offline status:", error);
+      }
+    });
+
+
+    // Join chat room 
+    socket.on("joinChat", ({ userId, targetUserId }) => {
+      const roomId = CreateSecretRoomId(userId, targetUserId);
+      socket.join(roomId);
+      // console.log(` User ${userId} joined chat room ${roomId}`);
+    });
+
+  
+
+    socket.on("user:typing", (data) => {
+      const { userId, targetUserId, isTyping } = data;
+
+      // Send typing status to recipient's personal room
+      io.to(`user:${targetUserId}`).emit("user:typing:status", {
+        userId: userId,
+        isTyping,
+      });
+
+      console.log(`  User ${userId} is ${isTyping ? "typing" : "stopped typing"}`);
+    });
+
+ 
+
+    // Broadcast message notification 
+    socket.on("message:broadcast", (data) => {
+      try {
+        const { userId, targetUserId, messageId, text, messageType, mediaFiles, timestamp } = data;
+
+        // Send notification to recipient's personal room
+        io.to(`user:${targetUserId}`).emit("message:broadcast", {
+          userId,
+          messageId,
+          text,
+          messageType,
+          mediaFiles,
+          timestamp
+        });
+
+        // console.log(` Message ${messageId} broadcasted to user ${targetUserId}`);
+      } catch (error) {
+        console.error("Error broadcasting message:", error);
+        socket.emit("error", { message: "Failed to broadcast message" });
+      }
+    });
+
+    // Mark message as read
+    socket.on("message:read", (data) => {
+      const { userId, targetUserId, messageId } = data;
+
+      io.to(`user:${targetUserId}`).emit("message:read:status", {
+        messageId: messageId,
+        isRead: true,
+      });
+
+      console.log(` Message ${messageId} marked as read`);
+    });
+
+    // Delete message 
+    socket.on("deleteMessage", (data) => {
+      const { userId, targetUserId, messageId } = data;
+
+      io.to(`user:${targetUserId}`).emit("message:deleted", {
+        messageId: messageId,
+      });
+
+      // console.log(` Message ${messageId} deleted`);
+    });
+
+   
+
+    socket.on("disconnect", async () => {
+      console.log(" User disconnected:", socket.id);
+
+      try {
+        const userStatus = await UserStatus.findOneAndUpdate(
+          { socketId: socket.id },
+          {
+            isOnline: false,
+            lastSeen: new Date(),
+          },
+          { new: true }
+        );
+
+        if (userStatus) {
+          io.emit("user:status:changed", {
+            userId: userStatus.user,
+            isOnline: false,
+            lastSeen: new Date(),
+          });
+        }
+      } catch (error) {
+        console.error("Error handling disconnect:", error);
+      }
+    });
+
+    // Error 
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
     });
   });
 };
 
 module.exports = initializeSocket;
+
 
 
 

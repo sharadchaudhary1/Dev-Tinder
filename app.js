@@ -14,7 +14,7 @@ const userRouter=require("./src/routes/user")
 const chatRouter=require("./src/routes/chat")
 const cors=require("cors");
 const initializeSocket = require("./src/helper/socket");
-// const agoraRouter=require("./src/routes/call")
+
 
 const app = express();
 
@@ -60,7 +60,8 @@ app.use('/request',requestRouter)
 app.use('/user',userRouter)
 
 app.use('/chats',chatRouter)
-// app.use("/agora",agoraRouter)
+
+
 
 
 

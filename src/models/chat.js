@@ -11,12 +11,29 @@ const messageSchema = new mongoose.Schema({
   },
   text: {
     type: String,
-    required: true
+    
+  },
+   mediaFiles: [
+    {
+      url: String,
+      fileType: String, 
+      fileName: String,
+      size: Number,
+    }
+  ],
+  messageType: {
+    type: String,
+    enum: ['text', 'media', 'mixed'],
+    default: 'text',
   },
   deletedBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "user"
-  }]
+  }],
+  isRead: {
+    type: Boolean,
+    default: false,
+  }
 }, { timestamps: true });
 
 const chatSchema = new mongoose.Schema({
@@ -43,9 +60,6 @@ const chatSchema = new mongoose.Schema({
 const chat = mongoose.model("chat", chatSchema);
 
 module.exports = chat;
-
-
-
 
 
 
