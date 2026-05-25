@@ -63,38 +63,45 @@ router.get('/connections',userAuth,async(req,res)=>{
 
 
 router.get('/feed',userAuth,async(req,res)=>{
+  
+    try{
 
-    loggedInUser=req.user
-
-    const connectionUsers=await ConnectionRequestModel.find({
-        $or:[
-            {fromUserId:loggedInUser._id},
-            {toUserId:loggedInUser._id}
-        ]
-    }).select(["fromUserId", "toUserId"])
-
-      
-    const hideUsersFromFeed=new Set()
-
-    connectionUsers.forEach(user=> {
-        hideUsersFromFeed.add(user.fromUserId.toString());
-        hideUsersFromFeed.add(user.toUserId.toString())
-    })
-
-    // const page=1;
-    // const limit=2;
-
-    const users=await UserModel.find({
-        $and:[
-            
-            { _id:{$nin:Array.from(hideUsersFromFeed)}},
-            {_id :{$ne:loggedInUser._id}}
-        ]
-    }).select(["firstname","lastname","age","gender","skills","about","profilePicture","images"])
-    // .skip((page-1)*limit).limit(limit)
-
+        loggedInUser=req.user
     
-res.send(users)
+        const connectionUsers=await ConnectionRequestModel.find({
+            $or:[
+                {fromUserId:loggedInUser._id},
+                {toUserId:loggedInUser._id}
+            ]
+        }).select(["fromUserId", "toUserId"])
+    
+          
+        const hideUsersFromFeed=new Set()
+    
+        connectionUsers.forEach(user=> {
+            hideUsersFromFeed.add(user.fromUserId.toString());
+            hideUsersFromFeed.add(user.toUserId.toString())
+        })
+    
+        // const page=1;
+        // const limit=2;
+    
+        const users=await UserModel.find({
+            $and:[
+                
+                { _id:{$nin:Array.from(hideUsersFromFeed)}},
+                {_id :{$ne:loggedInUser._id}}
+            ]
+        }).select(["firstname","lastname","age","gender","skills","about","profilePicture","images"])
+        // .skip((page-1)*limit).limit(limit)
+    
+        
+    res.send(users)
+    }
+    catch(err){
+        console.log("Error in fetching a feed ",err.message)
+        res.status(500).send("Error"+err.message)
+    }
 
 
 })
