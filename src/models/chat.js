@@ -36,6 +36,8 @@ const messageSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+
+
 const chatSchema = new mongoose.Schema({
   particpants: [
     {

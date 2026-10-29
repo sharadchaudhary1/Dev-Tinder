@@ -18,7 +18,7 @@ router.post("/register", async (req, res) => {
 
   const passwordhash=await bcrypt.hash(password,10)
    
-
+   
    const newUser={
     firstname:firstname,
     lastname:lastname,
@@ -48,9 +48,7 @@ router.post("/register", async (req, res) => {
   } catch (err) {
        
     console.log(err.message)
-    res
-      .status(400)
-      .send("Internal server ERROR",err.message);
+    res.status(400).send("Internal server ERROR",err.message);
   }
 });
 

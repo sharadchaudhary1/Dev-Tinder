@@ -107,7 +107,6 @@ router.get('/feed',userAuth,async(req,res)=>{
 })
 
 
-
 router.get('/chat/:id',userAuth,async(req,res)=>{
     
     try{
@@ -127,5 +126,6 @@ router.get('/chat/:id',userAuth,async(req,res)=>{
     }
 
 })
+
 
 module.exports=router;
