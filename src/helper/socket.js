@@ -96,7 +96,7 @@ const initializeSocket = (server) => {
     });
 
     socket.on("deleteMessage", ({ targetUserId, messageId }) => {
-      io.to(`user:${targetUserId}`).emit("message:deleted", { messageId });
+      io.to(`user:${targetUserId}`).emit("message:deleted", { messageId,isRead:true });
     });
 
     //  NEW: call signaling 
@@ -157,18 +157,20 @@ const initializeSocket = (server) => {
     });
 
     //  disconnect (existing + call cleanup) 
-    socket.on("disconnect", async () => {
+   socket.on("disconnect", async () => {
       console.log("User disconnected:", socket.id);
       try {
-        const userStatus = await UserStatus.findOneAndUpdate(
-          { socketId: socket.id },
-          { isOnline: false, lastSeen: new Date() },
-          { new: true }
+        // The user may still be connected from another tab / socket.
+        // Only treat them as gone when their LAST socket closes.
+        const remaining = await io.in(`user:${me}`).fetchSockets();
+        if (remaining.length > 0) return;
+ 
+        await UserStatus.findOneAndUpdate(
+          { user: me },
+          { isOnline: false, lastSeen: new Date() }
         );
-        if (userStatus) {
-          io.emit("user:status:changed", { userId: userStatus.user, isOnline: false, lastSeen: new Date() });
-        }
-
+        io.emit("user:status:changed", { userId: me, isOnline: false, lastSeen: new Date() });
+ 
         // if this user was in a call, tell the other person it ended
         const call = activeCalls.get(me);
         if (call) {
